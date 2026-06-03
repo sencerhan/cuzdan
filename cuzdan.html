@@ -671,7 +671,7 @@
       privateKeyHex: "",
       publicKeyHex: localStorage.getItem("bk.publicKey") || "",
       wallet: null,
-      envelope: null
+      plan: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -790,7 +790,7 @@
       state.privateKeyHex = "";
       state.publicKeyHex = "";
       state.wallet = null;
-      state.envelope = null;
+      state.plan = null;
       localStorage.removeItem("bk.publicKey");
       els.envelopeOutput.value = "";
       render();
@@ -889,26 +889,41 @@
       render();
     }
 
+    // Akilli token secimi (ag: transfer 1->1, split 1->2+, merge 2+->1):
+    //  - Tutari tek basina karsilayan en kucuk token varsa onu sec -> merge gerekmez.
+    //  - Yoksa en buyukten baslayarak en az sayida token ile tutara ulas -> merge gerekir.
     function selectInputs(amountUnits) {
+      const active = tokens()
+        .filter((t) => (t.status || "active") === "active")
+        .map((t) => {
+          let units;
+          try { units = parseUnits(t.value ?? t.amount ?? t.balance ?? 0); } catch { units = 0n; }
+          return { token_id: t.token_id || t.id, version: t.version ?? 1, units };
+        })
+        .filter((t) => t.units > 0n);
+
+      const covering = active
+        .filter((t) => t.units >= amountUnits)
+        .sort((a, b) => (a.units < b.units ? -1 : a.units > b.units ? 1 : 0));
+      if (covering.length) {
+        return { picked: [covering[0]], totalUnits: covering[0].units };
+      }
+
       const picked = [];
       let totalUnits = 0n;
-      for (const token of tokens().filter((t) => (t.status || "active") === "active")) {
-        let units;
-        try {
-          units = parseUnits(token.value ?? token.amount ?? token.balance ?? 0);
-        } catch {
-          continue;
-        }
-        if (units <= 0n) continue;
-        picked.push({
-          token_id: token.token_id || token.id,
-          version: token.version ?? 1
-        });
-        totalUnits += units;
+      for (const t of [...active].sort((a, b) => (a.units > b.units ? -1 : a.units < b.units ? 1 : 0))) {
+        picked.push(t);
+        totalUnits += t.units;
         if (totalUnits >= amountUnits) break;
       }
       if (totalUnits < amountUnits) throw new Error("Yetersiz bakiye");
       return { picked, totalUnits };
+    }
+
+    async function signTx(payload) {
+      const canonicalPayload = canonical(payload);
+      const signature = hex(await ed.signAsync(new TextEncoder().encode(canonicalPayload), bytes(state.privateKeyHex)));
+      return { ...payload, signature };
     }
 
     async function prepareTransfer() {
@@ -918,46 +933,122 @@
       if (!/^[0-9a-f]{64}$/.test(receiver)) throw new Error("Alici adresi 64 karakter hex olmali");
       const amountUnits = parseUnits(els.amountInput.value.trim());
       if (amountUnits <= 0n) throw new Error("Tutar gecersiz");
-      // Her zarftan once ag durumunu tazele: bir onceki gonderimde harcanmis
-      // token'lar yeniden secilmesin (yoksa "Output value exceeds input value").
+      // Gonderim oncesi ag durumunu tazele: harcanmis token yeniden secilmesin.
       await refreshWallet();
 
       const { picked, totalUnits } = selectInputs(amountUnits);
-      const id = txId("wallet-tx");
       const changeUnits = totalUnits - amountUnits;
-      // recv + change birimleri tam olarak totalUnits eder; ciktilar girdiyi gecemez.
-      const outputs = [{ token_id: `${id}-out-recv`, value: money(amountUnits), owner: receiver }];
-      if (changeUnits > 0n) outputs.push({ token_id: `${id}-out-change`, value: money(changeUnits), owner: state.publicKeyHex });
 
-      const payload = {
-        tx_id: id,
-        type: picked.length === 1 && changeUnits === 0n ? "transfer" : "split",
-        sender: state.publicKeyHex,
-        nonce: `${id}-nonce`,
-        inputs: picked.map((token) => ({ token_id: token.token_id, version: token.version })),
-        outputs,
+      // Odeme ciktilari (alici + varsa para ustu). sum(cikti) == sum(girdi) korunur.
+      const buildOutputs = (id) => {
+        const outs = [{ token_id: `${id}-out-recv`, value: money(amountUnits), owner: receiver }];
+        if (changeUnits > 0n) outs.push({ token_id: `${id}-out-change`, value: money(changeUnits), owner: state.publicKeyHex });
+        return outs;
       };
-      const canonicalPayload = canonical(payload);
-      const signature = hex(await ed.signAsync(new TextEncoder().encode(canonicalPayload), bytes(state.privateKeyHex)));
-      state.envelope = { ...payload, signature };
-      els.envelopeOutput.value = JSON.stringify(state.envelope, null, 2);
+
+      const plan = [];
+
+      if (picked.length === 1) {
+        // Tek girdi: dogrudan transfer (1->1) veya split (1->2+).
+        const id = txId("wallet-tx");
+        const outputs = buildOutputs(id);
+        plan.push(await signTx({
+          tx_id: id,
+          type: outputs.length === 1 ? "transfer" : "split",
+          sender: state.publicKeyHex,
+          nonce: `${id}-nonce`,
+          inputs: [{ token_id: picked[0].token_id, version: picked[0].version }],
+          outputs
+        }));
+      } else {
+        // Coklu girdi: agda tek islemde olmaz. Once merge (2+->1), sonra split/transfer.
+        const mergeId = txId("wallet-merge");
+        const mergedTokenId = `${mergeId}-out-merged`;
+        plan.push(await signTx({
+          tx_id: mergeId,
+          type: "merge",
+          sender: state.publicKeyHex,
+          nonce: `${mergeId}-nonce`,
+          inputs: picked.map((t) => ({ token_id: t.token_id, version: t.version })),
+          outputs: [{ token_id: mergedTokenId, value: money(totalUnits), owner: state.publicKeyHex }]
+        }));
+
+        const splitId = txId("wallet-tx");
+        const outputs = buildOutputs(splitId);
+        plan.push(await signTx({
+          tx_id: splitId,
+          type: outputs.length === 1 ? "transfer" : "split",
+          sender: state.publicKeyHex,
+          nonce: `${splitId}-nonce`,
+          inputs: [{ token_id: mergedTokenId, version: 1 }],
+          outputs
+        }));
+      }
+
+      state.plan = plan;
+      els.envelopeOutput.value = JSON.stringify(plan.length === 1 ? plan[0] : plan, null, 2);
       render();
-      toast("Imzali islem zarfi hazir");
+      toast(plan.length === 1
+        ? "Imzali islem zarfi hazir"
+        : `${picked.length} token birlestirilecek: 2 adimli zarf hazir`);
     }
 
-    async function submitTransfer() {
-      if (!state.envelope) throw new Error("Once imzali zarf hazirlayin");
-      setStatus("Islem gonderiliyor...", false);
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    // Basarili kabul edilen result degerleri (ag "accepted"/"ok"/"committed" dondurebilir).
+    const OK_RESULTS = ["ok", "accepted", "committed", "pending", "success"];
+
+    async function submitOne(tx) {
       const response = await fetch(`${apiBase()}/api/tx/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state.envelope)
+        body: JSON.stringify(tx)
       });
       const body = await response.text();
-      if (!response.ok) throw new Error(body || `Islem reddedildi (${response.status})`);
+      let parsed = null;
+      try { parsed = JSON.parse(body); } catch {}
+      const result = parsed?.result ? String(parsed.result).toLowerCase() : "";
+      const rejected = result && !OK_RESULTS.includes(result);
+      if (!response.ok || rejected) {
+        throw new Error(parsed?.error || parsed?.message || body || `Islem reddedildi (${response.status})`);
+      }
+      return body;
+    }
+
+    // Ara islemin (merge) onaylanmasini bekle; sonraki adim onun ciktisini harcayacak.
+    async function waitForCommit(id, timeoutMs = 25000) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const response = await fetch(`${apiBase()}/api/tx/${id}`);
+        if (response.ok) {
+          const data = (await response.json().catch(() => null))?.data;
+          if (data?.status === "committed") return;
+          if (data?.status === "rejected") throw new Error(data.rejected_reason || "Ara islem reddedildi");
+        }
+        await sleep(900);
+      }
+      throw new Error("Ara islem zamaninda onaylanmadi. Birkac saniye sonra tekrar deneyin.");
+    }
+
+    async function submitTransfer() {
+      if (!state.plan || !state.plan.length) throw new Error("Once imzali zarf hazirlayin");
+      const steps = state.plan;
+      const multi = steps.length > 1;
+      let lastBody = "";
+      for (let i = 0; i < steps.length; i++) {
+        setStatus(multi ? `Adim ${i + 1}/${steps.length} gonderiliyor...` : "Islem gonderiliyor...", false);
+        lastBody = await submitOne(steps[i]);
+        // Sonraki adim bu islemin ciktisini girdi olarak kullaniyorsa onayini bekle.
+        if (i < steps.length - 1) {
+          setStatus(`Adim ${i + 1}/${steps.length} onaylaniyor...`, false);
+          await waitForCommit(steps[i].tx_id);
+        }
+      }
       toast("Islem gonderildi");
-      state.envelope = null;
-      els.envelopeOutput.value = body;
+      state.plan = null;
+      els.envelopeOutput.value = lastBody;
       await refreshWallet();
     }
 

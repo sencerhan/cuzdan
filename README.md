@@ -192,6 +192,27 @@ Varsayılan API adresi: **`https://bitkurush.org`** (arayüzdeki **Gelişmiş ay
 
 İşlemler bir **UTXO / token** modeli üzerinde çalışır: girdiler harcanan token'lar, çıktılar yeni token'lardır (alıcı + para üstü).
 
+### İşlem tipleri ve yapısal kurallar
+
+Ağ üç işlem tipini kabul eder ve her birinin girdi/çıktı sayısı katıdır:
+
+| Tip | Kural | Kullanım |
+|-----|-------|----------|
+| `transfer` | **1 girdi → 1 çıktı** | Tek token tam tutarı karşılıyor, para üstü yok |
+| `split` | **1 girdi → 2+ çıktı** | Alıcı + para üstü (en yaygın gönderim) |
+| `merge` | **2+ girdi → 1 çıktı** | Parçalı token'ları tek token'da birleştirme |
+
+> **Değer korunumu zorunludur:** `sum(girdi değerleri) == sum(çıktı değerleri)`. İşlem ücreti (fee) yoktur; girdi ve çıktılar **birebir** dengelenmelidir.
+
+### Otomatik merge → split
+
+Tek bir token gönderilecek tutarı karşılamıyorsa (örn. elinizde `0,6` ve `0,66` varken `1,25` göndermek), ağ tek işlemde çoklu girdi + para üstüne izin vermez. Cüzdan bunu otomatik olarak iki adıma böler:
+
+1. **merge** — gerekli token'lar tek token'da birleştirilir (`2+ → 1`); bu işlemin **onaylanması beklenir**.
+2. **split / transfer** — birleşen token, alıcı + para üstü olarak gönderilir (`1 → 2`) veya tam tutarsa doğrudan `transfer` (`1 → 1`).
+
+Tek token tutarı zaten karşılıyorsa tek adımda (`transfer` ya da `split`) gönderilir; gereksiz merge yapılmaz.
+
 İmzalanan payload:
 
 ```json
@@ -210,7 +231,7 @@ Varsayılan API adresi: **`https://bitkurush.org`** (arayüzdeki **Gelişmiş ay
 }
 ```
 
-- **`type`:** Tek girdi ve para üstü yoksa `"transfer"`, aksi halde `"split"`.
+- **`type`:** Yukarıdaki kurallara göre `"transfer"`, `"split"` veya `"merge"`.
 - **İmza:** Payload **kanonik JSON**'a çevrilir (tüm anahtarlar özyinelemeli olarak alfabetik sıralanır), Ed25519 ile imzalanır ve sonuç `signature` alanı olarak zarfa eklenir:
 
 ```json
@@ -272,6 +293,7 @@ Ayrıca her **"İmzalı zarf hazırla"** öncesi cüzdan otomatik yenilenir; bö
 |--------|-------|-------|
 | `file://` uyarısı, CDN/modül hatası | Dosya doğrudan açıldı | Yerel HTTP sunucusuyla açın (bkz. [Hızlı başlangıç](#hızlı-başlangıç)) |
 | `Output value exceeds input value.` | (Giderildi) Float yuvarlama veya bayat token | Güncel sürüm BigInt + otomatik yenileme ile bunu önler |
+| `Split requires one input and multiple outputs.` | (Giderildi) Çoklu girdi + para üstü tek işlemde gönderilmişti | Güncel sürüm otomatik **merge → split** zinciri kurar |
 | `Yetersiz bakiye` | Seçilen tutar mevcut aktif token toplamından büyük | Tutarı düşürün veya bakiyeyi yenileyin |
 | `Private key oturumda değil` | Cüzdan kilitli | Cihaz parolasıyla açın, private key içe aktarın veya yedekten açın |
 | `Parola veya şifreli kayıt hatalı` | Yanlış parola ya da bozuk kasa | Doğru parolayı girin; gerekirse yedekten geri yükleyin |
