@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BitKurus Cuzdan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211b;
+      --muted: #627067;
+      --line: #d9e1db;
+      --soft: #f5f8f2;
+      --panel: #ffffff;
+      --accent: #0f8a63;
+      --accent-strong: #096b4c;
+      --warn: #a35b00;
+      --danger: #b42318;
+      --shadow: 0 18px 50px rgba(31, 47, 38, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(245, 248, 242, 0.96), rgba(235, 241, 233, 0.96)),
+        url("https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1800&q=80") center/cover fixed;
+      color: var(--ink);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease, opacity .15s ease;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: #fff;
+    }
+
+    button.secondary:hover {
+      background: var(--soft);
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    code {
+      overflow-wrap: anywhere;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      color: #fff;
+      background: #101915;
+      font-weight: 850;
+    }
+
+    h1, h2, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(24px, 4vw, 38px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .origin-warning {
+      display: none;
+      margin-bottom: 18px;
+      border: 1px solid #efc36d;
+      border-radius: 8px;
+      padding: 13px 14px;
+      color: #5d3a00;
+      background: #fff6df;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .origin-warning code {
+      color: #101915;
+      font-size: 13px;
+    }
+
+    body.file-origin .origin-warning {
+      display: block;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--warn);
+    }
+
+    .dot.ok {
+      background: var(--accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid rgba(217, 225, 219, 0.88);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding: 16px;
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding: 24px;
+      min-height: 210px;
+      background: linear-gradient(135deg, rgba(16, 25, 21, .96), rgba(19, 84, 63, .92));
+      color: #fff;
+    }
+
+    .balance {
+      font-size: clamp(42px, 8vw, 74px);
+      line-height: .95;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .balance small {
+      font-size: .28em;
+      font-weight: 750;
+      color: rgba(255,255,255,.72);
+    }
+
+    .hero .sub {
+      color: rgba(255,255,255,.72);
+    }
+
+    .address {
+      display: grid;
+      gap: 6px;
+      max-width: 560px;
+      color: rgba(255,255,255,.76);
+    }
+
+    .mono-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      background: var(--soft);
+      min-height: 42px;
+      overflow-wrap: anywhere;
+    }
+
+    .token-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .token {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .token strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      align-self: start;
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--accent-strong);
+      background: #e6f5ee;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .64);
+      text-align: center;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 4;
+      width: min(420px, calc(100% - 36px));
+      border-radius: 8px;
+      padding: 13px 14px;
+      color: #fff;
+      background: #101915;
+      box-shadow: var(--shadow);
+      transform: translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* --- cuzdan durumu + acilir bolumler --- */
+    .wallet-locked, .wallet-unlocked {
+      display: grid;
+      gap: 14px;
+    }
+
+    body.unlocked .wallet-locked { display: none; }
+    body:not(.unlocked) .wallet-unlocked { display: none; }
+
+    .when-no-wallet, .when-locked { display: none; }
+    body.no-wallet .when-no-wallet { display: block; }
+    body.locked .when-locked { display: block; }
+
+    .needs-vault { display: none; }
+    body.has-vault .needs-vault { display: grid; gap: 14px; }
+
+    .pill.warn { color: var(--warn); background: #fff3df; }
+    .pill.mute { color: var(--muted); background: var(--soft); }
+
+    /* Cuzdan acilana kadar sol kolonu kaplayan kilit overlay'i */
+    .main-stack { position: relative; }
+
+    .lock-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      border-radius: 8px;
+      background: rgba(245, 248, 242, 0.55);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+    }
+
+    body:not(.unlocked) .lock-overlay { display: flex; }
+
+    .lock-badge {
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      background: #101915;
+      color: #fff;
+      font-size: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .lock-overlay strong { font-size: 18px; }
+    .lock-overlay .hint { max-width: 320px; }
+
+    .danger-link {
+      justify-self: start;
+      min-height: auto;
+      padding: 4px 0;
+      color: var(--danger);
+      background: none;
+      font-size: 13px;
+      font-weight: 650;
+      text-decoration: underline;
+    }
+
+    .danger-link:hover { background: none; opacity: .75; }
+
+    details.disclosure {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    details.disclosure.panel {
+      box-shadow: var(--shadow);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    details.disclosure > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      list-style: none;
+      cursor: pointer;
+      padding: 13px 14px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    details.disclosure > summary::-webkit-details-marker { display: none; }
+
+    details.disclosure > summary::after {
+      content: "+";
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    details.disclosure[open] > summary::after { content: "\2013"; }
+
+    details.disclosure > summary:hover { background: var(--soft); }
+
+    details.disclosure[open] > summary { border-bottom: 1px solid var(--line); }
+
+    .disclosure-body {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">BK</div>
+        <div>
+          <h1>BitKurus Cuzdan</h1>
+          <p class="sub">Anahtarlar bu tarayicida kalir. Ag tarafina yalnizca public key ve imzali islem gider.</p>
+        </div>
+      </div>
+      <div class="status"><span id="netDot" class="dot"></span><span id="netStatus">Cuzdan bekliyor</span></div>
+    </header>
+
+    <div class="origin-warning">
+      Bu sayfa <code>file://</code> ile acilmis. Tarayici guvenligi nedeniyle module, CDN ve API istekleri sorun cikarabilir.
+      Proje klasorunde <code>python3 -m http.server 4173</code> calistirip <code>http://localhost:4173/cuzdan.html</code> adresinden acin.
+    </div>
+
+    <section class="grid">
+      <div class="stack main-stack">
+        <div class="lock-overlay">
+          <div class="lock-badge">&#128274;</div>
+          <strong>Cuzdan kilitli</strong>
+          <p class="hint when-no-wallet">Baslamak icin sagdaki panelden yeni cuzdan olustur ya da mevcut cuzdanini ac.</p>
+          <p class="hint when-locked">Devam etmek icin sagdaki panelden kilidi ac.</p>
+        </div>
+        <section class="panel hero">
+          <div>
+            <p class="sub">Toplam bakiye</p>
+            <div class="balance"><span id="balanceText">0</span> <small>BK</small></div>
+            <div class="address">
+              <span>Public address</span>
+              <code id="addressText">Henüz cüzdan yok</code>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="refreshBtn">Yenile</button>
+            <button id="copyAddressBtn" class="secondary">Adresi kopyala</button>
+          </div>
+        </section>
+
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Transfer</h2>
+            <span class="pill">Ed25519 imzali</span>
+          </div>
+          <div class="panel-body">
+            <label>Alici public key
+              <input id="receiverInput" autocomplete="off" spellcheck="false" placeholder="64 karakter hex adres">
+            </label>
+            <label>Tutar
+              <input id="amountInput" type="number" min="0" step="0.00000001" placeholder="0.00">
+            </label>
+            <label>Islem zarfi
+              <textarea id="envelopeOutput" readonly placeholder="Hazirlanan imzali zarf burada gorunur"></textarea>
+            </label>
+            <div class="actions">
+              <button id="prepareTxBtn">Imzali zarf hazirla</button>
+              <button id="submitTxBtn" class="secondary">Ag'a gonder</button>
+            </div>
+          </div>
+        </section>
+        
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Aktif tokenlar</h2>
+            <span id="tokenCount" class="pill">0 token</span>
+          </div>
+          <div class="panel-body">
+            <div id="tokenList" class="token-list">
+              <div class="empty">Bakiye okumak icin once cuzdan olusturun veya ice aktarin.</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Cuzdan</h2>
+            <span id="walletStateBadge" class="pill mute">Cuzdan yok</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Kilitli / cuzdan yok: olustur veya ac -->
+            <div class="wallet-locked">
+              <p class="hint when-no-wallet">Baslamak icin yeni bir cuzdan olustur. Daha once cuzdan actiysan asagidan tekrar acabilirsin.</p>
+              <p class="hint when-locked">Cuzdanin kilitli. Islem yapmak ve yedek almak icin once kilidini ac.</p>
+
+              <button id="newWalletBtn">Yeni cuzdan olustur</button>
+
+              <!-- Bu cihazda kayitli cuzdan varsa hizli ac -->
+              <div class="needs-vault">
+                <label>Bu cihazdaki cuzdani ac
+                  <input id="unlockPassword" type="password" autocomplete="current-password" placeholder="Cihaz parolasi">
+                </label>
+                <button id="unlockLocalBtn">Kilidi ac</button>
+              </div>
+
+              <details class="disclosure">
+                <summary>Baska bir cuzdan ac</summary>
+                <div class="disclosure-body">
+                  <label>Private key ile ac
+                    <textarea id="privateKeyInput" placeholder="64 karakter hex private key"></textarea>
+                  </label>
+                  <button id="importKeyBtn" class="secondary">Private key ile ac</button>
+
+                  <label>Yedek dosyasindan ac
+                    <input id="restoreFile" type="file" accept="application/json,.json">
+                  </label>
+                  <label>Yedek parolasi
+                    <input id="restorePassword" type="password" autocomplete="off" placeholder="Yedek dosyasinin parolasi">
+                  </label>
+                  <button id="restoreBtn" class="secondary">Yedekten ac</button>
+
+                  <button id="forgetLocalBtn" class="danger-link needs-vault">Bu cihazdaki kayitli cuzdani sil</button>
+                </div>
+              </details>
+            </div>
+
+            <!-- Acik: hazir + gelismis islemler -->
+            <div class="wallet-unlocked">
+              <p class="hint">Cuzdanin acik ve isleme hazir. Isin bitince kilitlemen onerilir.</p>
+              <button id="lockBtn" class="secondary">Cuzdani kilitle</button>
+
+              <details class="disclosure">
+                <summary>Bu cihazda sakla</summary>
+                <div class="disclosure-body">
+                  <p class="hint">Bir parola belirle; private key bu tarayicida sifreli saklanir, sonra tek parolayla acarsin.</p>
+                  <label>Cihaz parolasi
+                    <input id="savePassword" type="password" autocomplete="new-password">
+                  </label>
+                  <button id="saveLocalBtn" class="secondary">Bu cihazda sifreli sakla</button>
+                </div>
+              </details>
+
+              <details class="disclosure">
+                <summary>Sifreli yedek indir</summary>
+                <div class="disclosure-body">
+                  <p class="hint">Cuzdani baska cihaza tasimak veya guvende tutmak icin sifreli yedek dosyasi indir.</p>
+                  <label>Yedek parolasi
+                    <input id="backupPassword" type="password" autocomplete="new-password">
+                  </label>
+                  <button id="backupBtn">Sifreli yedek indir</button>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <details class="panel disclosure">
+          <summary>Gelismis ayarlar</summary>
+          <div class="disclosure-body">
+            <label>API adresi
+              <input id="apiInput" value="https://bitkurush.org" spellcheck="false">
+            </label>
+            <label>Islem sorgu &mdash; Tx id
+              <input id="txLookupInput" spellcheck="false" placeholder="Islem kimligi">
+            </label>
+            <button id="lookupTxBtn" class="secondary">Durum sorgula</button>
+            <textarea id="lookupOutput" readonly placeholder="Sorgu sonucu burada gorunur"></textarea>
+          </div>
+        </details>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    if (location.protocol === "file:") {
+      document.body.classList.add("file-origin");
+    }
+  </script>
+
+  <script type="module">
+    import * as ed from "https://cdn.jsdelivr.net/npm/@noble/ed25519@2.2.3/+esm";
+
+    const state = {
+      privateKeyHex: "",
+      publicKeyHex: localStorage.getItem("bk.publicKey") || "",
+      wallet: null,
+      envelope: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      netDot: $("netDot"),
+      netStatus: $("netStatus"),
+      balanceText: $("balanceText"),
+      addressText: $("addressText"),
+      tokenCount: $("tokenCount"),
+      tokenList: $("tokenList"),
+      refreshBtn: $("refreshBtn"),
+      copyAddressBtn: $("copyAddressBtn"),
+      receiverInput: $("receiverInput"),
+      amountInput: $("amountInput"),
+      envelopeOutput: $("envelopeOutput"),
+      prepareTxBtn: $("prepareTxBtn"),
+      submitTxBtn: $("submitTxBtn"),
+      apiInput: $("apiInput"),
+      newWalletBtn: $("newWalletBtn"),
+      privateKeyInput: $("privateKeyInput"),
+      importKeyBtn: $("importKeyBtn"),
+      unlockPassword: $("unlockPassword"),
+      savePassword: $("savePassword"),
+      saveLocalBtn: $("saveLocalBtn"),
+      unlockLocalBtn: $("unlockLocalBtn"),
+      forgetLocalBtn: $("forgetLocalBtn"),
+      lockBtn: $("lockBtn"),
+      walletStateBadge: $("walletStateBadge"),
+      backupPassword: $("backupPassword"),
+      backupBtn: $("backupBtn"),
+      restorePassword: $("restorePassword"),
+      restoreBtn: $("restoreBtn"),
+      restoreFile: $("restoreFile"),
+      txLookupInput: $("txLookupInput"),
+      lookupTxBtn: $("lookupTxBtn"),
+      lookupOutput: $("lookupOutput"),
+      toast: $("toast")
+    };
+
+    function hex(bytes) {
+      return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function bytes(hexText) {
+      if (typeof hexText !== "string") throw new Error("Gecersiz hex");
+      const clean = hexText.trim().toLowerCase();
+      if (!/^[0-9a-f]+$/.test(clean) || clean.length % 2) throw new Error("Gecersiz hex");
+      return Uint8Array.from(clean.match(/.{2}/g).map((b) => parseInt(b, 16)));
+    }
+
+    function apiBase() {
+      return els.apiInput.value.trim().replace(/\/+$/, "");
+    }
+
+    function toast(message, danger = false) {
+      els.toast.textContent = message;
+      els.toast.style.background = danger ? "var(--danger)" : "#101915";
+      els.toast.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => els.toast.classList.remove("show"), 3200);
+    }
+
+    function setStatus(message, ok = false) {
+      els.netStatus.textContent = message;
+      els.netDot.classList.toggle("ok", ok);
+    }
+
+    function canonical(value) {
+      if (value === null || typeof value !== "object") return JSON.stringify(value);
+      if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+      return "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
+    }
+
+    async function sha256Hex(text) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return hex(new Uint8Array(digest));
+    }
+
+    // Ag degerleri 18 ondalikli string olarak tutar (ornek: "0.051297982406494487").
+    // Bunlari ASLA float'a (Number) cevirmeyiz; hassasiyet kaybi ciktilarin girdiyi
+    // gecmesine yol acar ("Output value exceeds input value"). Tum aritmetik, 18
+    // ondaliga olceklenmis BigInt tamsayilar uzerinde tam (exact) yapilir.
+    const VALUE_DECIMALS = 18;
+    const VALUE_SCALE = 10n ** BigInt(VALUE_DECIMALS);
+
+    // Ondalik string/sayiyi 18 ondaliga olceklenmis BigInt'e cevir (kayan nokta yok).
+    function parseUnits(value) {
+      const text = String(value).trim();
+      if (!/^\d+(\.\d+)?$/.test(text)) throw new Error("Gecersiz tutar");
+      const [whole, frac = ""] = text.split(".");
+      const fracPadded = (frac + "0".repeat(VALUE_DECIMALS)).slice(0, VALUE_DECIMALS);
+      return BigInt(whole) * VALUE_SCALE + BigInt(fracPadded);
+    }
+
+    // BigInt birimi, agin bekledigi 18 ondalikli kanonik string'e cevir.
+    function money(units) {
+      if (typeof units !== "bigint" || units < 0n) throw new Error("Tutar gecersiz");
+      const whole = units / VALUE_SCALE;
+      const frac = (units % VALUE_SCALE).toString().padStart(VALUE_DECIMALS, "0");
+      return `${whole}.${frac}`;
+    }
+
+    function txId(prefix = "wallet-tx") {
+      const random = hex(crypto.getRandomValues(new Uint8Array(8)));
+      return `${prefix}-${Date.now().toString(36)}-${random}`;
+    }
+
+    function saveKeys(privateKeyHex, publicKeyHex) {
+      state.privateKeyHex = privateKeyHex;
+      state.publicKeyHex = publicKeyHex;
+      localStorage.setItem("bk.publicKey", publicKeyHex);
+      render();
+    }
+
+    function clearKeys() {
+      state.privateKeyHex = "";
+      state.publicKeyHex = "";
+      state.wallet = null;
+      state.envelope = null;
+      localStorage.removeItem("bk.publicKey");
+      els.envelopeOutput.value = "";
+      render();
+    }
+
+    function hasLocalVault() {
+      return Boolean(localStorage.getItem("bk.encryptedPrivateKey"));
+    }
+
+    function tokens() {
+      const wallet = walletData();
+      const raw = wallet?.tokens || wallet?.outputs || wallet?.utxos || [];
+      return Array.isArray(raw) ? raw : [];
+    }
+
+    function walletData() {
+      if (!state.wallet) return null;
+      return state.wallet.data && typeof state.wallet.data === "object" ? state.wallet.data : state.wallet;
+    }
+
+    function tokenValue(token) {
+      const value = token.value ?? token.amount ?? token.balance ?? 0;
+      return Number(value);
+    }
+
+    function walletBalance() {
+      const wallet = walletData();
+      if (!wallet) return 0;
+      if (wallet.balance !== undefined) return Number(wallet.balance);
+      return tokens().reduce((sum, token) => sum + tokenValue(token), 0);
+    }
+
+    function render() {
+      const hasWallet = Boolean(state.publicKeyHex);
+      const unlocked = Boolean(state.privateKeyHex);
+      const hasVault = hasLocalVault();
+      document.body.classList.toggle("no-wallet", !hasWallet);
+      document.body.classList.toggle("locked", hasWallet && !unlocked);
+      document.body.classList.toggle("unlocked", unlocked);
+      document.body.classList.toggle("has-vault", hasVault);
+      els.walletStateBadge.textContent = unlocked ? "Acik" : hasWallet ? "Kilitli" : "Cuzdan yok";
+      els.walletStateBadge.className = "pill" + (unlocked ? "" : hasWallet ? " warn" : " mute");
+      els.addressText.textContent = hasWallet ? state.publicKeyHex : "Henuz cuzdan yok";
+      els.balanceText.textContent = walletBalance().toLocaleString("tr-TR", { maximumFractionDigits: 8 });
+      const activeTokens = tokens();
+      els.tokenCount.textContent = `${activeTokens.length} token`;
+      els.refreshBtn.disabled = !hasWallet;
+      els.copyAddressBtn.disabled = !hasWallet;
+      els.prepareTxBtn.disabled = false;
+      els.submitTxBtn.disabled = false;
+      els.backupBtn.disabled = false;
+      els.lockBtn.disabled = !hasWallet;
+
+      if (!hasWallet) {
+        els.tokenList.innerHTML = '<div class="empty">Bakiye okumak icin once cuzdan olusturun veya ice aktarin.</div>';
+        setStatus("Cuzdan bekliyor", false);
+        return;
+      }
+
+      if (!state.wallet) {
+        els.tokenList.innerHTML = '<div class="empty">Ag durumunu okumak icin yenileyin.</div>';
+        setStatus("Cuzdan hazir", true);
+        return;
+      }
+
+      if (!activeTokens.length) {
+        els.tokenList.innerHTML = '<div class="empty">Aktif token bulunamadi.</div>';
+        return;
+      }
+
+      els.tokenList.innerHTML = activeTokens.map((token) => `
+        <article class="token">
+          <div>
+            <strong>${tokenValue(token).toLocaleString("tr-TR", { maximumFractionDigits: 8 })} BK</strong>
+            <code>${escapeHtml(token.token_id || token.id || token.hash || "token-id-yok")}</code>
+            <p class="sub">v${escapeHtml(String(token.version ?? 1))}</p>
+          </div>
+          <span class="pill">${escapeHtml(token.status || "active")}</span>
+        </article>
+      `).join("");
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[ch]));
+    }
+
+    async function refreshWallet() {
+      if (!state.publicKeyHex) return;
+      setStatus("Ag okunuyor...", false);
+      const response = await fetch(`${apiBase()}/api/wallet/${state.publicKeyHex}`);
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.message || body?.error || `Wallet okunamadi (${response.status})`);
+      if (body?.result && body.result !== "ok") throw new Error(body?.message || body?.error || "Wallet cevabi basarisiz");
+      state.wallet = body;
+      setStatus("Ag senkron", true);
+      render();
+    }
+
+    function selectInputs(amountUnits) {
+      const picked = [];
+      let totalUnits = 0n;
+      for (const token of tokens().filter((t) => (t.status || "active") === "active")) {
+        let units;
+        try {
+          units = parseUnits(token.value ?? token.amount ?? token.balance ?? 0);
+        } catch {
+          continue;
+        }
+        if (units <= 0n) continue;
+        picked.push({
+          token_id: token.token_id || token.id,
+          version: token.version ?? 1
+        });
+        totalUnits += units;
+        if (totalUnits >= amountUnits) break;
+      }
+      if (totalUnits < amountUnits) throw new Error("Yetersiz bakiye");
+      return { picked, totalUnits };
+    }
+
+    async function prepareTransfer() {
+      if (!state.publicKeyHex) throw new Error("Once cuzdan olusturun veya acin");
+      if (!state.privateKeyHex) throw new Error("Private key oturumda degil. Islem imzalamak icin private key ice aktarin veya sifreli yedekten acin.");
+      const receiver = els.receiverInput.value.trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/.test(receiver)) throw new Error("Alici adresi 64 karakter hex olmali");
+      const amountUnits = parseUnits(els.amountInput.value.trim());
+      if (amountUnits <= 0n) throw new Error("Tutar gecersiz");
+      // Her zarftan once ag durumunu tazele: bir onceki gonderimde harcanmis
+      // token'lar yeniden secilmesin (yoksa "Output value exceeds input value").
+      await refreshWallet();
+
+      const { picked, totalUnits } = selectInputs(amountUnits);
+      const id = txId("wallet-tx");
+      const changeUnits = totalUnits - amountUnits;
+      // recv + change birimleri tam olarak totalUnits eder; ciktilar girdiyi gecemez.
+      const outputs = [{ token_id: `${id}-out-recv`, value: money(amountUnits), owner: receiver }];
+      if (changeUnits > 0n) outputs.push({ token_id: `${id}-out-change`, value: money(changeUnits), owner: state.publicKeyHex });
+
+      const payload = {
+        tx_id: id,
+        type: picked.length === 1 && changeUnits === 0n ? "transfer" : "split",
+        sender: state.publicKeyHex,
+        nonce: `${id}-nonce`,
+        inputs: picked.map((token) => ({ token_id: token.token_id, version: token.version })),
+        outputs,
+      };
+      const canonicalPayload = canonical(payload);
+      const signature = hex(await ed.signAsync(new TextEncoder().encode(canonicalPayload), bytes(state.privateKeyHex)));
+      state.envelope = { ...payload, signature };
+      els.envelopeOutput.value = JSON.stringify(state.envelope, null, 2);
+      render();
+      toast("Imzali islem zarfi hazir");
+    }
+
+    async function submitTransfer() {
+      if (!state.envelope) throw new Error("Once imzali zarf hazirlayin");
+      setStatus("Islem gonderiliyor...", false);
+      const response = await fetch(`${apiBase()}/api/tx/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state.envelope)
+      });
+      const body = await response.text();
+      if (!response.ok) throw new Error(body || `Islem reddedildi (${response.status})`);
+      toast("Islem gonderildi");
+      state.envelope = null;
+      els.envelopeOutput.value = body;
+      await refreshWallet();
+    }
+
+    async function deriveKey(password, salt) {
+      const baseKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" },
+        baseKey,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    async function encryptPrivateKey(privateKeyHex, password) {
+      if (password.length < 8) throw new Error("Parola en az 8 karakter olmali");
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKey(password, salt);
+      const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(privateKeyHex));
+      return {
+        version: 1,
+        public_key: state.publicKeyHex,
+        kdf: "PBKDF2-SHA256",
+        iterations: 250000,
+        salt: hex(salt),
+        iv: hex(iv),
+        ciphertext: hex(new Uint8Array(ciphertext))
+      };
+    }
+
+    async function decryptPrivateKey(vault, password) {
+      const key = await deriveKey(password, bytes(vault.salt));
+      let plaintext;
+      try {
+        plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(vault.iv) }, key, bytes(vault.ciphertext));
+      } catch {
+        throw new Error("Parola veya sifreli kayit hatali");
+      }
+      const privateKeyHex = new TextDecoder().decode(plaintext);
+      const publicKeyHex = hex(await ed.getPublicKeyAsync(bytes(privateKeyHex)));
+      if (vault.public_key && vault.public_key !== publicKeyHex) throw new Error("Sifreli kayit public key ile eslesmedi");
+      return { privateKeyHex, publicKeyHex };
+    }
+
+    async function downloadBackup() {
+      const password = els.backupPassword.value;
+      if (!state.publicKeyHex) throw new Error("Once cuzdan olusturun veya acin");
+      if (!state.privateKeyHex) throw new Error("Private key oturumda degil. Yedek icin private key ice aktarin veya sifreli yedekten acin.");
+      const backup = await encryptPrivateKey(state.privateKeyHex, password);
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bitkurus-wallet-${state.publicKeyHex.slice(0, 10)}.json`;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast("Sifreli yedek indirildi");
+    }
+
+    async function restoreBackup() {
+      const file = els.restoreFile.files?.[0];
+      const password = els.restorePassword.value;
+      if (!file) throw new Error("Yedek dosyasi secin");
+      if (!password) throw new Error("Yedek parolasini girin");
+      let backup;
+      try {
+        backup = JSON.parse(await file.text());
+      } catch {
+        throw new Error("Yedek dosyasi JSON formatinda olmali");
+      }
+      const hasBackupShape = backup
+        && backup.version === 1
+        && typeof backup.public_key === "string"
+        && typeof backup.salt === "string"
+        && typeof backup.iv === "string"
+        && typeof backup.ciphertext === "string";
+      if (!hasBackupShape) {
+        throw new Error("Bu dosya sifreli cuzdan yedegi degil. Ledger export dosyasi yedekten acilamaz.");
+      }
+      let restored;
+      try {
+        restored = await decryptPrivateKey(backup, password);
+      } catch {
+        throw new Error("Yedek acilamadi. Parola veya yedek dosyasi hatali.");
+      }
+      const { privateKeyHex, publicKeyHex } = restored;
+      saveKeys(privateKeyHex, publicKeyHex);
+      els.restorePassword.value = "";
+      els.restoreFile.value = "";
+      await refreshWallet();
+      toast("Cuzdan yedekten acildi");
+    }
+
+    async function run(action) {
+      try {
+        await action();
+      } catch (error) {
+        console.error(error);
+        toast(error.message || "Islem basarisiz", true);
+        setStatus("Hata olustu", false);
+      } finally {
+        render();
+      }
+    }
+
+    els.newWalletBtn.addEventListener("click", () => run(async () => {
+      if (state.publicKeyHex && !confirm("Yeni cuzdan olusturmak mevcut cuzdan adresini degistirir. Devam edilsin mi?")) return;
+      const privateKey = ed.utils.randomPrivateKey();
+      const publicKey = await ed.getPublicKeyAsync(privateKey);
+      saveKeys(hex(privateKey), hex(publicKey));
+      state.wallet = null;
+      toast("Yeni cuzdan olusturuldu");
+    }));
+
+    els.importKeyBtn.addEventListener("click", () => run(async () => {
+      const privateKeyHex = els.privateKeyInput.value.trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/.test(privateKeyHex)) throw new Error("Private key 64 karakter hex olmali");
+      const publicKeyHex = hex(await ed.getPublicKeyAsync(bytes(privateKeyHex)));
+      saveKeys(privateKeyHex, publicKeyHex);
+      els.privateKeyInput.value = "";
+      await refreshWallet();
+      toast("Cuzdan acildi");
+    }));
+
+    els.saveLocalBtn.addEventListener("click", () => run(async () => {
+      if (!state.publicKeyHex) throw new Error("Once cuzdan olusturun veya acin");
+      if (!state.privateKeyHex) throw new Error("Private key oturumda degil. Once private key ile acin veya yedekten acin.");
+      const vault = await encryptPrivateKey(state.privateKeyHex, els.savePassword.value);
+      localStorage.setItem("bk.encryptedPrivateKey", JSON.stringify(vault));
+      els.savePassword.value = "";
+      render();
+      toast("Private key bu cihazda sifreli saklandi");
+    }));
+
+    els.unlockLocalBtn.addEventListener("click", () => run(async () => {
+      const raw = localStorage.getItem("bk.encryptedPrivateKey");
+      if (!raw) throw new Error("Bu cihazda sifreli kayit yok");
+      if (!els.unlockPassword.value) throw new Error("Cihaz parolasini girin");
+      let vault;
+      try {
+        vault = JSON.parse(raw);
+      } catch {
+        throw new Error("Yerel sifreli kayit bozuk. Kaydi silip yeniden saklayin.");
+      }
+      const { privateKeyHex, publicKeyHex } = await decryptPrivateKey(vault, els.unlockPassword.value);
+      saveKeys(privateKeyHex, publicKeyHex);
+      els.unlockPassword.value = "";
+      await refreshWallet();
+      toast("Yerel kilit acildi");
+    }));
+
+    els.forgetLocalBtn.addEventListener("click", () => {
+      if (!confirm("Bu cihazdaki sifreli kayit silinecek. Yedegin yoksa cuzdana bir daha erisemeyebilirsin. Devam edilsin mi?")) return;
+      localStorage.removeItem("bk.encryptedPrivateKey");
+      render();
+      toast("Yerel sifreli kayit silindi");
+    });
+
+    els.refreshBtn.addEventListener("click", () => run(refreshWallet));
+    els.prepareTxBtn.addEventListener("click", () => run(prepareTransfer));
+    els.submitTxBtn.addEventListener("click", () => run(submitTransfer));
+    els.backupBtn.addEventListener("click", () => run(downloadBackup));
+    els.restoreBtn.addEventListener("click", () => run(restoreBackup));
+    els.lockBtn.addEventListener("click", () => {
+      clearKeys();
+      toast("Cuzdan kilitlendi");
+    });
+
+    els.copyAddressBtn.addEventListener("click", () => run(async () => {
+      await navigator.clipboard.writeText(state.publicKeyHex);
+      toast("Adres kopyalandi");
+    }));
+
+    function submitOnEnter(input, button) {
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          button.click();
+        }
+      });
+    }
+
+    submitOnEnter(els.unlockPassword, els.unlockLocalBtn);
+    submitOnEnter(els.privateKeyInput, els.importKeyBtn);
+    submitOnEnter(els.restorePassword, els.restoreBtn);
+    submitOnEnter(els.savePassword, els.saveLocalBtn);
+    submitOnEnter(els.backupPassword, els.backupBtn);
+    submitOnEnter(els.txLookupInput, els.lookupTxBtn);
+
+    els.lookupTxBtn.addEventListener("click", () => run(async () => {
+      const txId = els.txLookupInput.value.trim();
+      if (!txId) throw new Error("Tx id girin");
+      const response = await fetch(`${apiBase()}/api/tx/${txId}`);
+      els.lookupOutput.value = await response.text();
+      if (!response.ok) throw new Error(`Sorgu basarisiz (${response.status})`);
+    }));
+
+    render();
+
+    if (state.publicKeyHex) {
+      run(refreshWallet);
+    }
+  </script>
+</body>
+</html>

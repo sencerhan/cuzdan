@@ -1,2 +1,4 @@
 /commands.json
 /subdomains.json
+.claude/
+.DS_Store
