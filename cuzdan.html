@@ -486,6 +486,58 @@
         white-space: normal;
       }
     }
+
+    /* --- Modal (Popup) Stilleri --- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16, 25, 21, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      width: min(440px, calc(100% - 28px));
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 16px;
+      transform: translateY(10px);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-content h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -658,6 +710,27 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Cüzdan Şifre Belirleme Pop-up Modalı -->
+  <div id="passwordModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Cüzdan Parolası Belirleyin</h3>
+      <p class="hint">
+        Yeni cüzdanınız için en az 8 karakterden oluşan güçlü bir şifre belirleyin. 
+        Bu şifre, cüzdanınızı bu cihazda güvenli şekilde şifrelemek ve işlemleri onaylamak için kullanılacaktır.
+      </p>
+      <label>Şifre
+        <input id="modalPasswordInput" type="password" placeholder="Şifreniz (En az 8 karakter)" required>
+      </label>
+      <label>Şifre Tekrar
+        <input id="modalPasswordConfirmInput" type="password" placeholder="Şifrenizi tekrar girin" required>
+      </label>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" class="secondary">İptal</button>
+        <button id="modalConfirmBtn">Oluştur ve Cihaza Kaydet</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     if (location.protocol === "file:") {
       document.body.classList.add("file-origin");
@@ -708,7 +781,12 @@
       txLookupInput: $("txLookupInput"),
       lookupTxBtn: $("lookupTxBtn"),
       lookupOutput: $("lookupOutput"),
-      toast: $("toast")
+      toast: $("toast"),
+      passwordModal: $("passwordModal"),
+      modalPasswordInput: $("modalPasswordInput"),
+      modalPasswordConfirmInput: $("modalPasswordConfirmInput"),
+      modalCancelBtn: $("modalCancelBtn"),
+      modalConfirmBtn: $("modalConfirmBtn")
     };
 
     function hex(bytes) {
@@ -1158,13 +1236,37 @@
       }
     }
 
-    els.newWalletBtn.addEventListener("click", () => run(async () => {
+    els.newWalletBtn.addEventListener("click", () => {
       if (state.publicKeyHex && !confirm("Yeni cuzdan olusturmak mevcut cuzdan adresini degistirir. Devam edilsin mi?")) return;
+      els.modalPasswordInput.value = "";
+      els.modalPasswordConfirmInput.value = "";
+      els.passwordModal.classList.add("show");
+      els.modalPasswordInput.focus();
+    });
+
+    els.modalCancelBtn.addEventListener("click", () => {
+      els.passwordModal.classList.remove("show");
+    });
+
+    els.modalConfirmBtn.addEventListener("click", () => run(async () => {
+      const pass = els.modalPasswordInput.value;
+      const passConfirm = els.modalPasswordConfirmInput.value;
+      if (!pass || pass.length < 8) throw new Error("Parola en az 8 karakter olmali");
+      if (pass !== passConfirm) throw new Error("Parolalar eslesmiyor");
+
       const privateKey = ed.utils.randomPrivateKey();
       const publicKey = await ed.getPublicKeyAsync(privateKey);
+      
+      // encryptPrivateKey fonksiyonunun state.publicKeyHex'e ulasabilmesi icin gecici olarak atama yapiyoruz.
+      state.publicKeyHex = hex(publicKey);
+      
+      const vault = await encryptPrivateKey(hex(privateKey), pass);
+      localStorage.setItem("bk.encryptedPrivateKey", JSON.stringify(vault));
+      
       saveKeys(hex(privateKey), hex(publicKey));
       state.wallet = null;
-      toast("Yeni cuzdan olusturuldu");
+      els.passwordModal.classList.remove("show");
+      toast("Yeni cuzdan olusturuldu ve cihaza sifreli olarak kaydedildi");
     }));
 
     els.importKeyBtn.addEventListener("click", () => run(async () => {
@@ -1241,6 +1343,8 @@
     submitOnEnter(els.savePassword, els.saveLocalBtn);
     submitOnEnter(els.backupPassword, els.backupBtn);
     submitOnEnter(els.txLookupInput, els.lookupTxBtn);
+    submitOnEnter(els.modalPasswordInput, els.modalConfirmBtn);
+    submitOnEnter(els.modalPasswordConfirmInput, els.modalConfirmBtn);
 
     els.lookupTxBtn.addEventListener("click", () => run(async () => {
       const txId = els.txLookupInput.value.trim();
